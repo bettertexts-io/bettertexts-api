@@ -32,7 +32,7 @@ def generate_prompt(body: RequestBody):
     else:
         try:
           # prompt = f"Paraphrase this input, intended for a {medium}, in two different ways in a {style} style, not identical, but keep meaning: '{input}'"
-          prompt = f"Rephrase the following text in a {body.style} tone for a {body.medium} in two utter different options and seperate them by a \n, while maintaining the original meaning: {body.input}"
+          prompt = f"Rephrase the following text in a {body.style} tone for a {body.medium} in two utter different options and seperate them by a %|%, while maintaining the original meaning: {body.input}"
           
           response = openai.Completion.create(
             model="text-davinci-003",
@@ -47,13 +47,14 @@ def generate_prompt(body: RequestBody):
           generated_result = response.choices[0].text
           print("Generated Result: ", generated_result)
 
-          results = generated_result.split("\n")
+          results = generated_result.split("%|%")
           cleaned_results = []
 
           for result in results:
-            result.replace("\n", "")
             result = re.sub("Option [0-9]: ", "", result)
-            if result != "":
+            # Check if result only contains \n characters with regex
+            if result != "" and re.match("^\s+$", result) == None:
+              result.replace("\n\n", "")
               cleaned_results.append(result)
 
           return {"status": 200, "results": cleaned_results}
