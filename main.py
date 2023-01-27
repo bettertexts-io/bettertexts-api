@@ -1,20 +1,25 @@
 from fastapi import Depends, FastAPI
 from fastapi.security.api_key import APIKey
 from fastapi.middleware.cors import CORSMiddleware
-import openai
+
 from pydantic import BaseModel
 import re
+
 import auth_middleware as auth
-from config import config_env
+from gpt3_helper import get_gpt3_results
+from prompt_helper import generate_prompt
 
-SPLIT_CHAR = "#+#"
-
-openai.api_key = config_env["OPENAI_API_KEY"]
-
-class RequestBody(BaseModel):
+class ParaphraseRequestBody(BaseModel):
     input: str = ""
     style: str = "natural"
     medium: str = "text"
+    langCode: str = "en"
+
+
+class CorrectSpellingRequestBody(BaseModel):
+    input: str = ""
+    langCode: str = "en"
+
 
 app = FastAPI()
 
@@ -33,67 +38,43 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Endpoint to generate paraphrases
+# Endpoint to generate paraphrase
 @app.post("/api/v1/paraphrase")
-async def generate_paraphrases(body: RequestBody, api_key: APIKey = Depends(auth.get_api_key)):
-    # print all three parameters
-    print("Input: ", body.input)
-    print("Style: ", body.style)
-    print("Medium: ", body.medium)
+async def generate_paraphrase(body: ParaphraseRequestBody, _: APIKey = Depends(auth.get_api_key)):
+    input, style, medium, langCode = body.input, body.style, body.medium, body.langCode
 
     # if input is empty, return empty array
     if input == "":
         return {"results": []}
     else:
-        try:
-          # prompt = f"Paraphrase this input, intended for a {medium}, in two different ways in a {style} style, not identical, but keep meaning: '{input}'"
-          # prompt = f"Rephrase the following text in a {body.style} tone for a {body.medium} in two different ways, return only the , while keeping the original meaning: {body.input}"
-          prompt = f"Rephrase the following input, in a {body.style} tone for a {body.medium}. Input: {body.input}. Output only the raw generated content."
-          
-          response = openai.Completion.create(
-            model="text-davinci-003",
-            prompt=prompt,
-            temperature=0.6,
-            max_tokens=300,
-            top_p=1,
-            frequency_penalty=1,
-            presence_penalty=1
-          )
+        prompt = generate_prompt(input, style, medium, langCode)
 
-          cleaned_results = []
-          generated_result = response.choices[0].text
-          print("Generated Result: ", generated_result)
-
-          # splitted_vals = re.split(SPLIT_CHAR, generated_result, maxsplit=2)
-
-          # for result in splitted_vals:
-          #   result = re.sub(SPLIT_CHAR, "", result)
-          #   # Check if result only contains \n characters with regex
-          #   if result != "" and re.match("^\s+$", result) == None:
-          #     result = result.replace("\n", "")
-          #     cleaned_results.append(result)
-
-          if generated_result != "" and re.match("^\s+$", generated_result) == None:
-            generated_result = generated_result.replace("\n", "")
-            cleaned_results.append(generated_result)
-
-          return {"results": cleaned_results}
-
-        except Exception as e:
-          print("Error: ", e)
-          return {"results": []}
+        results = get_gpt3_results(prompt)
+        return {"results": results}
 
 
 # Endpoint to generate mock paraphrases
 @app.post("/api/v1/mock/paraphrase")
-async def generate_mock_paraphrases(body: RequestBody, api_key: APIKey = Depends(auth.get_api_key)):
-   # print all three parameters
-    print("Input: ", body.input)
-    print("Style: ", body.style)
-    print("Medium: ", body.medium)
-
+async def generate_mock_paraphrase(_: ParaphraseRequestBody, __: APIKey = Depends(auth.get_api_key)):
     # if input is empty, return empty array
     if input == "":
         return {"results": []}
     else:
         return {"results": ["This is a mock result", "This is another mock result"]}
+
+
+# Endpoint to correct spelling
+@app.post("/api/v1/correct")
+async def correct_spelling(body: CorrectSpellingRequestBody, _: APIKey = Depends(auth.get_api_key)):
+    input, langCode = body.input, body.langCode
+
+    # if input is empty, return empty array
+    if input == "":
+        return {"results": []}
+    else:
+        lang = "German" if langCode == "de" else "English"
+        prompt = f"Correct the spelling of the following input and return the output in {lang}. Input: {input}."
+        
+        results = get_gpt3_results(prompt)
+
+        return {"results": results}
