@@ -21,6 +21,7 @@ app = FastAPI()
 origins = [
     "http://localhost",
     "http://localhost:3000",
+    "https://bettertexts.io",
 ]
 
 app.add_middleware(
@@ -46,7 +47,7 @@ async def generate_paraphrases(body: RequestBody, api_key: APIKey = Depends(auth
         try:
           # prompt = f"Paraphrase this input, intended for a {medium}, in two different ways in a {style} style, not identical, but keep meaning: '{input}'"
           # prompt = f"Rephrase the following text in a {body.style} tone for a {body.medium} in two different ways, return only the , while keeping the original meaning: {body.input}"
-          prompt = f"Rephrase the following input, in a {body.style} tone for a {body.medium}, output only the raw generated paraphrase: {body.input}."
+          prompt = f"Rephrase the following input, in a {body.style} tone for a {body.medium}. Input: {body.input}. Output only the raw generated content."
           
           response = openai.Completion.create(
             model="text-davinci-003",
