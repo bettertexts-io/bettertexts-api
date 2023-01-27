@@ -7,6 +7,8 @@ import re
 import auth_middleware as auth
 from config import config_env
 
+SPLIT_CHAR = "#+#"
+
 openai.api_key = config_env["OPENAI_API_KEY"]
 
 class RequestBody(BaseModel):
@@ -31,7 +33,7 @@ app.add_middleware(
 
 # Endpoint to generate paraphrases
 @app.post("/api/v1/paraphrase")
-async def generate_prompt(body: RequestBody, api_key: APIKey = Depends(auth.get_api_key)):
+async def generate_paraphrases(body: RequestBody, api_key: APIKey = Depends(auth.get_api_key)):
     # print all three parameters
     print("Input: ", body.input)
     print("Style: ", body.style)
@@ -43,7 +45,8 @@ async def generate_prompt(body: RequestBody, api_key: APIKey = Depends(auth.get_
     else:
         try:
           # prompt = f"Paraphrase this input, intended for a {medium}, in two different ways in a {style} style, not identical, but keep meaning: '{input}'"
-          prompt = f"Rephrase the following text in a {body.style} tone for a {body.medium} in two different options, while keeping the original meaning: {body.input}"
+          # prompt = f"Rephrase the following text in a {body.style} tone for a {body.medium} in two different ways, return only the , while keeping the original meaning: {body.input}"
+          prompt = f"Rephrase the following input, in a {body.style} tone for a {body.medium}, output only the raw generated paraphrase: {body.input}."
           
           response = openai.Completion.create(
             model="text-davinci-003",
@@ -55,19 +58,22 @@ async def generate_prompt(body: RequestBody, api_key: APIKey = Depends(auth.get_
             presence_penalty=1
           )
 
+          cleaned_results = []
           generated_result = response.choices[0].text
           print("Generated Result: ", generated_result)
 
-          splitted_vals = re.split("Option [0-9]: ", generated_result, maxsplit=3)
-          splitted_vals = splitted_vals[1:]
-          cleaned_results = []
+          # splitted_vals = re.split(SPLIT_CHAR, generated_result, maxsplit=2)
 
-          for result in splitted_vals:
-            result = re.sub("Option [0-9]: ", "", result)
-            # Check if result only contains \n characters with regex
-            if result != "" and re.match("^\s+$", result) == None:
-              result = result.replace("\n", "")
-              cleaned_results.append(result)
+          # for result in splitted_vals:
+          #   result = re.sub(SPLIT_CHAR, "", result)
+          #   # Check if result only contains \n characters with regex
+          #   if result != "" and re.match("^\s+$", result) == None:
+          #     result = result.replace("\n", "")
+          #     cleaned_results.append(result)
+
+          if generated_result != "" and re.match("^\s+$", generated_result) == None:
+            generated_result = generated_result.replace("\n", "")
+            cleaned_results.append(generated_result)
 
           return {"results": cleaned_results}
 
@@ -76,3 +82,16 @@ async def generate_prompt(body: RequestBody, api_key: APIKey = Depends(auth.get_
           return {"results": []}
 
 
+# Endpoint to generate mock paraphrases
+@app.post("/api/v1/mock/paraphrase")
+async def generate_mock_paraphrases(body: RequestBody, api_key: APIKey = Depends(auth.get_api_key)):
+   # print all three parameters
+    print("Input: ", body.input)
+    print("Style: ", body.style)
+    print("Medium: ", body.medium)
+
+    # if input is empty, return empty array
+    if input == "":
+        return {"results": []}
+    else:
+        return {"results": ["This is a mock result", "This is another mock result"]}

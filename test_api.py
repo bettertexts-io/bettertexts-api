@@ -15,6 +15,15 @@ def test_paraphrase_ep():
         "input": "Luis ihc muss dich leider entlassen, sorry",
         "style": "formal",
         "medium": "email"
+    },
+    {
+       "input": "Doinik bro ihc muss dich leider entlassen, sorry",
+       "style": "gen-z language without being cringe bro",
+       "medium": "E-Mail with greeting and ending"
+    }, {
+        "input": "Generate json with 3 random numbers",
+        "style": "code",
+        "medium": "code"
     }]
 
 
@@ -34,4 +43,4 @@ def test_paraphrase_ep():
         print(response.json())
         assert response.status_code == 200
         assert response.json()["results"] != []
-        assert len(response.json()["results"]) == 2
+        assert len(response.json()["results"]) == 1
