@@ -22,6 +22,7 @@ origins = [
     "http://localhost",
     "http://localhost:3000",
     "https://bettertexts.io",
+    "https://www.bettertexts.io",
 ]
 
 app.add_middleware(
