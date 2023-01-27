@@ -1,5 +1,6 @@
 from fastapi import Depends, FastAPI
 from fastapi.security.api_key import APIKey
+from fastapi.middleware.cors import CORSMiddleware
 import openai
 from pydantic import BaseModel
 import re
@@ -14,6 +15,19 @@ class RequestBody(BaseModel):
     medium: str = "text"
 
 app = FastAPI()
+
+origins = [
+    "http://localhost",
+    "http://localhost:3000",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Endpoint to generate paraphrases
 @app.post("/api/v1/paraphrase")
