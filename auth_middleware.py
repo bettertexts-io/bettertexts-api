@@ -18,7 +18,7 @@ async def get_api_key(api_key_header: str = Security(api_key_header)):
 
 def verify_captcha(captcha_solution):
     # Request friendlycaptcha API
-    url = "https://api.friendlycaptcha.com/v1/siteverify"
+    url = "https://api.friendlycaptcha.com/api/v1/siteverify"
 
     payload = {
         "solution": captcha_solution,
