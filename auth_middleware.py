@@ -1,5 +1,5 @@
 import json
-from urllib import request
+import requests
 from fastapi.security.api_key import APIKeyHeader
 from fastapi import Security, HTTPException
 from starlette.status import HTTP_403_FORBIDDEN
@@ -30,7 +30,7 @@ def verify_captcha(captcha_solution):
         "Content-Type": "application/json",
     }
 
-    response = request.request("POST", url, headers=headers, data=json.dumps(payload))
+    response = requests.post(url, headers=headers, data=json.dumps(payload))
 
     # Return if response is valid
     return json.loads(response.text)["success"] == True
