@@ -15,6 +15,12 @@ class ParaphraseRequestBody(BaseModel):
     medium: str = "text"
     langCode: str = "en"
 
+class ParaphraseRequestBodyDemo(BaseModel):
+    input: str = ""
+    style: str = "natural"
+    medium: str = "text"
+    langCode: str = "en"
+    captcha_solution: str = ""
 
 class CorrectSpellingRequestBody(BaseModel):
     input: str = ""
@@ -48,6 +54,25 @@ async def generate_paraphrase(body: ParaphraseRequestBody, _: APIKey = Depends(a
         return {"results": []}
     else:
         prompt = generate_prompt(input, style, medium, langCode)
+
+        results = get_gpt3_results(prompt)
+        return {"results": results}
+
+
+# Endpoint to generate paraphrase
+@app.post("/api/v1/paraphrase/demo")
+async def generate_paraphrase_demo(body: ParaphraseRequestBodyDemo, _: APIKey = Depends(auth.get_api_key)):
+    input, style, medium, langCode, captcha_solution = body.input, body.style, body.medium, body.langCode, body.captcha_solution
+
+    # if input is empty, return empty array
+    if input == "" or captcha_solution == "":
+        return {"results": []}
+    else:
+        prompt = generate_prompt(input, style, medium, langCode)
+
+        # Verify captcha solution
+        if not auth.verify_captcha(captcha_solution):
+            return {"results": []}
 
         results = get_gpt3_results(prompt)
         return {"results": results}

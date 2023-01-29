@@ -1,9 +1,10 @@
 def generate_prompt(input: str, style: str, medium: str, langCode: str):
     language = "German" if langCode == "de" else "English"
     prompt = f"Rephrase the following input, in a {style} tone. Input: {input}. Output only the raw generated content in {language}."
+    medium = medium.lower()
 
     if medium == "email":
-        prompt = f"Rephrase the following input to compose an email for the following recipient and purpose:\nInput: [input]\nRecipient: [Recipient's name and email address]\nSubject: [Email subject]\nBody: [Email body]\nPlease include a {style} tone, and make sure to address the recipient by name.\nFeel free to add any necessary details or information to complete the email and write it in {language}."
+        prompt = f"Rephrase the following input to compose an email body:\nInput: {input}\nPlease include a {style} tone.\nFeel free to add any necessary details or information to complete the email and write it in {language}."
     elif medium == "bulletpoints":
         prompt = f"Summarize the following input in a bullet point list in a {style} tone. Input: {input}. The output should be in {language}."
     elif medium == "letter":
